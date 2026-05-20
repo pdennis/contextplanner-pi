@@ -1,0 +1,10 @@
+{
+  "name": "contextplanner-pi",
+  "version": "1.0.0",
+  "description": "Pi extension: plan mode, subagent delegation, and Exa web research in one standalone extension",
+  "keywords": ["pi-package"],
+  "license": "MIT",
+  "pi": {
+    "extensions": ["./extensions"]
+  }
+}

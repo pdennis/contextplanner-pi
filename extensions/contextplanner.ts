@@ -468,6 +468,94 @@ export default function contextPlannerExtension(pi: ExtensionAPI): void {
     },
   });
 
+  // ── Plan mode toggle shortcut ──────────────────────────────────────────────
+
+  pi.registerShortcut("ctrl+alt+p", {
+    description: "Toggle plan mode: enter when idle, exit/execute when planning",
+    handler: async (ctx) => {
+      // ── Exit path: already in plan mode ─────────────────────────────────
+      if (state === "planning" || state === "awaiting_approval") {
+        // Abort the current agent turn so the model stops generating
+        if (!ctx.isIdle()) ctx.abort();
+
+        // Check if the plan file has real content (not just the placeholder)
+        let planFileReady = false;
+        try {
+          const raw = readFileSync(planFilePath, "utf8");
+          planFileReady = !raw.includes("*(Thinking...)*") && raw.trim().length > 20;
+        } catch { /* file doesn't exist yet — execution options will be hidden */ }
+
+        const items: string[] = [];
+        if (planFileReady) {
+          items.push("✅  Execute plan — approve and start executing now");
+          items.push("🔄  Clear context & execute — exit, filter context, send clean execute message");
+        }
+        items.push("🚪  Exit without executing — cancel plan mode, return to idle");
+        items.push("✖  Cancel — stay in plan mode");
+
+        const choice = await ctx.ui.select("Exit plan mode", items);
+
+        if (!choice || choice.startsWith("✖")) return;
+
+        if (choice.startsWith("✅")) {
+          await handleApproval(ctx);
+        } else if (choice.startsWith("🔄")) {
+          clearState();
+          updateUI(ctx);
+          persistState();
+          pi.sendUserMessage(
+            `Read the plan from \`${planFilePath}\` and execute it step by step.`,
+          );
+        } else if (choice.startsWith("🚪")) {
+          if (existsSync(planFilePath)) {
+            try { writeFileSync(planFilePath, "# Plan (cancelled)\n", "utf8"); } catch {}
+          }
+          clearState();
+          updateUI(ctx);
+          persistState();
+          ctx.ui.notify("Plan mode exited.", "info");
+        }
+        return;
+      }
+
+      // ── Enter path: not in plan mode ────────────────────────────────────
+      if (state !== "idle") return; // silent no-op during execution
+
+      planFilePath = defaultPlanPath(ctx.cwd);
+      mkdirSync(dirname(planFilePath), { recursive: true });
+      writeFileSync(planFilePath, "# Plan\n\n*(Thinking...)*\n", "utf8");
+
+      state = "planning";
+      phase = "understanding";
+      planningStartTime = Date.now();
+      activeResearchCount = 0;
+
+      updateUI(ctx);
+      persistState();
+
+      const prompt = await ctx.ui.input(
+        "Plan mode",
+        "What do you want to plan? Describe the task you'd like me to investigate and design a plan for.",
+      );
+
+      if (!prompt?.trim()) {
+        clearState();
+        updateUI(ctx);
+        persistState();
+        ctx.ui.notify("Plan mode cancelled — no prompt provided.", "info");
+        return;
+      }
+
+      ctx.ui.notify(`Plan mode activated. Plan file: ${planFilePath}`, "info");
+
+      pi.sendUserMessage(
+        "I want to plan this task carefully. Please enter planning mode: understand the task, " +
+        "research anything unclear, then design an approach, then write the plan to the plan file.\n\n" +
+        `Here is the task I want to plan:\n\n${prompt.trim()}`,
+      );
+    },
+  });
+
   // ── Goal command ────────────────────────────────────────────────────────────
 
   pi.registerCommand("goal", {

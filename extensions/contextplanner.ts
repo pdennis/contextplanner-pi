@@ -391,11 +391,28 @@ export default function contextPlannerExtension(pi: ExtensionAPI): void {
 
       updateUI(ctx);
       persistState();
+
+      // Ask the user for their planning prompt BEFORE triggering a model turn
+      const prompt = await ctx.ui.input(
+        "Plan mode",
+        "What do you want to plan? Describe the task you'd like me to investigate and design a plan for.",
+      );
+
+      if (!prompt?.trim()) {
+        // User cancelled or gave empty input — exit plan mode cleanly
+        clearState();
+        updateUI(ctx);
+        persistState();
+        ctx.ui.notify("Plan mode cancelled — no prompt provided.", "info");
+        return;
+      }
+
       ctx.ui.notify(`Plan mode activated. Plan file: ${planFilePath}`, "info");
 
       pi.sendUserMessage(
         "I want to plan this task carefully. Please enter planning mode: understand the task, " +
-        "research anything unclear, then design an approach, then write the plan to the plan file.",
+        "research anything unclear, then design an approach, then write the plan to the plan file.\n\n" +
+        `Here is the task I want to plan:\n\n${prompt.trim()}`,
       );
     },
   });

@@ -470,7 +470,7 @@ export default function contextPlannerExtension(pi: ExtensionAPI): void {
 
   // ── Plan mode toggle shortcut ──────────────────────────────────────────────
 
-  pi.registerShortcut("ctrl+shift+p", {
+  pi.registerShortcut("f5", {
     description: "Toggle plan mode: enter when idle, exit/execute when planning",
     handler: async (ctx) => {
       // ── Exit path: already in plan mode ─────────────────────────────────

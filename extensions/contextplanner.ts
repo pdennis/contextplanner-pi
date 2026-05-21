@@ -470,7 +470,7 @@ export default function contextPlannerExtension(pi: ExtensionAPI): void {
 
   // ── Plan mode toggle shortcut ──────────────────────────────────────────────
 
-  pi.registerShortcut("ctrl+shift+p", {
+  pi.registerShortcut("ctrl+shift+x", {
     description: "Toggle plan mode: enter when idle, exit/execute when planning",
     handler: async (ctx) => {
       // ── Exit path: already in plan mode ─────────────────────────────────
@@ -1313,7 +1313,7 @@ export default function contextPlannerExtension(pi: ExtensionAPI): void {
 
     // Show hotkey reminder on startup
     ctx.ui.notify(
-      "Context Planner: use /plan or Ctrl+Shift+P to enter plan mode, /goal to set a session goal.",
+      "Context Planner: use /plan or Ctrl+Shift+X to enter plan mode, /goal to set a session goal.",
       "info",
     );
 

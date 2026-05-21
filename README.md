@@ -35,7 +35,7 @@ Get a key at [dashboard.exa.ai/api-keys](https://dashboard.exa.ai/api-keys).
 
 | Command | Description |
 |---------|-------------|
-| `/plan` | Enter plan mode |
+| `/plan` or `Ctrl+Shift+X` | Enter plan mode |
 | `/plan-cancel` | Cancel plan mode |
 | `/goal` | View or edit the session goal |
 | `/exa-login` | Set your Exa API key |
